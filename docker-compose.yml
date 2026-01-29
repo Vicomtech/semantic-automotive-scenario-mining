@@ -1,0 +1,35 @@
+services:
+  graphdb:
+    image: khaller/graphdb-free:10.8.0
+    container_name: graphdb-nuscenes
+    ports:
+      - "7300:7200"
+    restart: always
+    volumes:
+      - type: bind
+        source: ./vol_nuscenes
+        target: /opt/graphdb/home
+        bind:
+          create_host_path: true
+    environment:
+      GDB_JAVA_OPTS: >-
+        -Xmx64g -Xms64g -Xss8m
+        -Dgraphdb.home=/opt/graphdb/home
+        -Dgraphdb.workbench.importDirectory=/opt/graphdb/home/graphdb-import
+        -Dgraphdb.workbench.maxUploadSize=8589934592
+    logging:
+      options:
+        max-size: "50m"
+
+  api:
+    build:
+      context: ./api_nuscenes
+    image: api-nuscenes:latest
+    container_name: api-nuscenes
+    depends_on:
+      - graphdb
+    ports:
+      - "8086:8000"
+    env_file:
+      - ./api_nuscenes/.env
+    restart: always

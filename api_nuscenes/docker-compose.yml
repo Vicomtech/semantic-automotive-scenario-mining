@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    image: api-nuscenes:latest
+    container_name: api-nuscenes
+    ports:
+      - "8086:8000"
+    env_file:
+      - .env
