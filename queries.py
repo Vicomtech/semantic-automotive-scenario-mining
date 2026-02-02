@@ -689,11 +689,11 @@ WHERE {{
   FILTER(?de   < {THRESHOLD_CUT_IN})
   FILTER(?fs2 > ?fs1)
 
+  # rotación: diferencia angular normalizada usando cos (evita salto ±pi)
   BIND(ofn:pi() AS ?pi)
-  FILTER(
-    ?r1 > (?r2 - (?pi/4)) &&
-    ?r1 < (?r2 + (?pi/4))
-  )
+  BIND((?r1 - ?r2) AS ?drot)
+  BIND(ofn:cos(?drot) AS ?cosd)
+  FILTER(?cosd > ofn:cos(?pi/4))
 }}
 GROUP BY ?scene ?v ?ego ?l1 ?l2
 """
@@ -915,11 +915,11 @@ WHERE {{
        {pref_str}:isLocatedIn   ?l2 .
   FILTER(?fs2 > ?fs1)
 
+  # rotación: diferencia angular normalizada usando cos (evita salto ±pi)
   BIND(ofn:pi() AS ?pi)
-  FILTER(
-    ?r1 > (?r2 - (?pi/4)) &&
-    ?r1 < (?r2 + (?pi/4))
-  )
+  BIND((?r1 - ?r2) AS ?drot)
+  BIND(ofn:cos(?drot) AS ?cosd)
+  FILTER(?cosd > ofn:cos(?pi/4))
 }}
 GROUP BY ?scene ?v ?ego ?l1 ?l2
 ORDER BY ?scene ?v ?start
@@ -964,6 +964,5 @@ def execute():
 
 if __name__ == "__main__":
     execute()
-
 
 
