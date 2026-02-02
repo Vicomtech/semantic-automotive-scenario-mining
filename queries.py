@@ -607,6 +607,7 @@ def handle_lane_change():
         ?ed1 rdf:type {pref_str}:EgoData ;
              {pref_str}:framestamp ?f1 ;
              {pref_str}:isLocatedIn ?l1 .
+        BIND(?f1 + 1 AS ?f2)
         ?ed2 rdf:type {pref_str}:EgoData ;
              {pref_str}:framestamp ?f2 ;
              {pref_str}:isLocatedIn ?l2 .
@@ -615,7 +616,6 @@ def handle_lane_change():
         ?l2 rdf:type {pref_str}:lane .
         ?l1 {pref_str}:isNextTo ?l2 .
         ?vehicle {pref_str}:hasData ?ed1 .
-        FILTER(?f2 - ?f1 = 1)
         FILTER(?l1 != ?l2)
         {filter_str}
     }}
@@ -660,11 +660,6 @@ WHERE {{
   ?scene a {pref_str}:scene ;
          {pref_str}:hasEgoData  ?ed ;
          {pref_str}:hasObject   ?l1, ?l2, ?v .
-  ?ed    a {pref_str}:EgoData ;
-         {pref_str}:framestamp   ?fs2 ;
-         {pref_str}:ego_rotation  ?r2 ;
-         {pref_str}:isLocatedIn  ?l2 .
-  ?ego   {pref_str}:hasData     ?ed .
 
   # Carriles
   ?l1 a {pref_str}:lane .
@@ -678,6 +673,14 @@ WHERE {{
   ?od1 a {pref_str}:ObjectData ;
        {pref_str}:framestamp   ?fs1 ;
        {pref_str}:isLocatedIn  ?l1 .
+  BIND(?fs1 + 1 AS ?fs2)
+
+  ?ed    a {pref_str}:EgoData ;
+         {pref_str}:framestamp   ?fs2 ;
+         {pref_str}:ego_rotation  ?r2 ;
+         {pref_str}:isLocatedIn  ?l2 .
+  ?ego   {pref_str}:hasData     ?ed .
+
   ?od2 a {pref_str}:ObjectData ;
        {pref_str}:framestamp      ?fs2 ;
        {pref_str}:isLocatedIn     ?l2 ;
@@ -687,7 +690,6 @@ WHERE {{
 
   FILTER(str(?front) = "true")
   FILTER(?de   < {THRESHOLD_CUT_IN})
-  FILTER(?fs2 > ?fs1)
 
   # rotación: diferencia angular normalizada usando cos (evita salto ±pi)
   BIND(ofn:pi() AS ?pi)
@@ -910,10 +912,10 @@ WHERE {{
   FILTER(str(?front)="true")
   FILTER(?de < {THRESHOLD_CUT_OUT})
 
+  BIND(?fs1 + 1 AS ?fs2)
   ?od2 a {pref_str}:ObjectData ;
        {pref_str}:framestamp    ?fs2 ;
        {pref_str}:isLocatedIn   ?l2 .
-  FILTER(?fs2 > ?fs1)
 
   # rotación: diferencia angular normalizada usando cos (evita salto ±pi)
   BIND(ofn:pi() AS ?pi)
@@ -964,5 +966,3 @@ def execute():
 
 if __name__ == "__main__":
     execute()
-
-

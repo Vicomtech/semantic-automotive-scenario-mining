@@ -23,6 +23,7 @@ import subprocess
 import multiprocessing  
 import tempfile
 import uuid
+import argparse
 
 
 # ---------------------------------------------------------------------
@@ -613,10 +614,39 @@ def merge_results(queue):
         scene_data, scene_relations = queue.get()
         add_scene_to_named_graph(scene_data, scene_relations, ds, my_uri, pref, graph_context)
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Preload VCDs and generate N-Quads output")
+    parser.add_argument(
+        "--mode",
+        choices=("mp", "seq"),
+        default="mp",
+        help="Processing mode: mp (multiprocessing) or seq (sequential).",
+    )
+    parser.add_argument(
+        "--processes",
+        type=int,
+        default=None,
+        help="Number of worker processes for mp mode (default: os.cpu_count()).",
+    )
+    return parser.parse_args()
+
+
+def run_multiprocessing(processes):
+    with multiprocessing.Pool(processes=processes) as pool:
+        chunk_files = pool.map(process_vcd, vcd_files)
+    return chunk_files
+
+
+def run_sequential():
+    return [process_vcd(vcd) for vcd in vcd_files]
+
+
 if __name__ == '__main__':
-    # Parallel workflow: process each VCD into a temporary .nq chunk, then merge them
-    with multiprocessing.Pool() as pool:
-        chunk_files = pool.map(process_vcd, vcd_files) 
+    args = parse_args()
+    if args.mode == "seq":
+        chunk_files = run_sequential()
+    else:
+        chunk_files = run_multiprocessing(args.processes)
 
     output_file = "population_V9.nq"
     with open(output_file, 'wb') as dst:

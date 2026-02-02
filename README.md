@@ -30,11 +30,17 @@ The script will:
 1) start GraphDB (Docker) if needed,
 2) create the repository if it does not exist,
 3) import the ontology,
-4) run `preload.py` and generate `population_V9.nq`,
-5) pause and ask you to import `population_V9.nq` manually,
-6) run `queries.py` and generate `queries_V6.nt`,
-7) pause and ask you to import `queries_V6.nt` manually,
-8) ask if you want to export actions/events back to VCDs.
+4) ask whether to run `preload.py` in multiprocessing or sequential mode,
+5) run `preload.py` and generate `population_V9.nq`,
+6) pause and ask you to import `population_V9.nq` manually,
+7) run `queries.py` and generate `queries_V6.nt`,
+8) pause and ask you to import `queries_V6.nt` manually,
+9) ask if you want to export actions/events back to VCDs.
+
+## Preload mode prompt
+Before running `preload.py`, the script asks:
+- **Multiprocessing (default)**: faster, but can fail on low RAM.
+- **Sequential**: slower, but more stable.
 
 ## Manual imports in GraphDB
 

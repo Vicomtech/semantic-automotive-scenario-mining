@@ -223,6 +223,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def prompt_preload_mode() -> str:
+    print("\nChoose preload.py execution mode:")
+    print("1) Multiprocessing (faster, WARNING: may fail if you don't have much RAM)")
+    print("2) Sequential (slower but more stable)")
+    choice = input("Option [1/2] (default 1): ").strip()
+    return "seq" if choice == "2" else "mp"
+
+
 def main() -> int:
     args = parse_args()
 
@@ -287,7 +295,8 @@ def main() -> int:
     # 4. PRELOAD (Generate -> Move -> Manual Pause)
     if not args.skip_preload:
         print("\n--- Running preload.py ---")
-        run_cmd([sys.executable, "preload.py"], cwd=root)
+        mode = prompt_preload_mode()
+        run_cmd([sys.executable, "preload.py", "--mode", mode], cwd=root)
 
         nq_path = root / NQ_OUTPUT
         move_and_pause(nq_path, graphdb_import_dir, base_url)
