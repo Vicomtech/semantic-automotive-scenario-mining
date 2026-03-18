@@ -209,6 +209,15 @@ def move_and_pause(src_path: Path, import_dir: Path, workbench_url: str) -> None
     print("Resuming pipeline...\n")
 
 
+def find_latest_file(root: Path, patterns: list[str]) -> Optional[Path]:
+    candidates: list[Path] = []
+    for pattern in patterns:
+        candidates.extend(root.glob(pattern))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda p: p.stat().st_mtime)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the NuScenes pipeline end-to-end")
     parser.add_argument("--config", default="conf.yaml", help="Path to conf.yaml")
@@ -298,7 +307,21 @@ def main() -> int:
         mode = prompt_preload_mode()
         run_cmd([sys.executable, "preload.py", "--mode", mode], cwd=root)
 
-        nq_path = root / NQ_OUTPUT
+        nq_name = cfg.get("outputs", {}).get("nq_file", NQ_OUTPUT)
+        nq_path = resolve_path(root, nq_name)
+        if not nq_path.exists():
+            nq_path = find_latest_file(
+                root,
+                [
+                    nq_name,
+                    NQ_OUTPUT,
+                    "population_V*.nq",
+                    "*.nq",
+                ],
+            )
+        if not nq_path:
+            print("No .nq output file found after preload.py")
+            return 1
         move_and_pause(nq_path, graphdb_import_dir, base_url)
 
         print("[OK] Preload step verified by user.")
@@ -308,7 +331,20 @@ def main() -> int:
         print("\n--- Running queries.py ---")
         run_cmd([sys.executable, "queries.py"], cwd=root)
 
-        nt_path = root / NT_OUTPUT
+        nt_name = cfg.get("outputs", {}).get("queries_file", NT_OUTPUT)
+        nt_path = resolve_path(root, nt_name)
+        if not nt_path.exists():
+            nt_path = find_latest_file(
+                root,
+                [
+                    nt_name,
+                    NT_OUTPUT,
+                    "queries_*.nt",
+                ],
+            )
+        if not nt_path:
+            print("No .nt output file found after queries.py")
+            return 1
         move_and_pause(nt_path, graphdb_import_dir, base_url)
 
         print("[OK] Queries step verified by user.")

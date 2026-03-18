@@ -27,6 +27,7 @@ THRESHOLD_CUT_IN        = read_params['thresholds']['cut_in_distance_to_ego']
 THRESHOLD_CUT_OUT        = read_params['thresholds']['cut_out_distance_to_ego']
 THRESHOLD_NEAR_MISS_COLLISION = read_params['thresholds']['near_miss_collision']
 THRESHOLD_FOLLOWING    = read_params['thresholds']['following_distance']
+OUTPUT_QUERIES_FILE = read_params.get("outputs", {}).get("queries_file", "queries_V6.nt")
 
 # Grafo RDF global
 graph = Graph()
@@ -956,11 +957,11 @@ def execute():
     
     if len(graph):
         graph.serialize(
-        destination="queries_V6.nt",
+        destination=OUTPUT_QUERIES_FILE,
         format="nt",
         encoding="utf-8"
         )
-        print("Tripletas serializadas en queries_V6.nt")
+        print(f"Tripletas serializadas en {OUTPUT_QUERIES_FILE}")
     else:
         print("No se generaron tripletas.")
 

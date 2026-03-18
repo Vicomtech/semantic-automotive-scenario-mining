@@ -14,6 +14,7 @@ Edit `conf.yaml` before running the pipeline if you need to change paths, ports,
 - `ontology`: base URI, prefix, and the ontology file path.
 - `vcd.vcd_path`: input VCD folder (source JSON files).
 - `paths.output_dir`: output folder for VCDs with actions/events.
+- `outputs`: filenames for generated RDF (`.nq`) and queries (`.nt`).
 - `database`: GraphDB connection (ip/port/repository).
 - `endpoint_url`: full GraphDB SPARQL endpoint.
 - `api`: optional class discovery API (used in preload).

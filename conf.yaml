@@ -5,10 +5,14 @@ ontology:
   ontology_path : "./NuScenes_vA.rdf"
 
 vcd: 
-  vcd_path: "./prueba/"
+  vcd_path: "./vcd_nuscenes_full/"
 
 paths:
-  output_dir: "./prueba_enriched/"
+  output_dir: "./vcd_nuscenes_full_enriched/"
+
+outputs:
+  nq_file: "population_Nuscenes.nq"
+  queries_file: "queries_Nuscenes.nt"
 
 database:
   db_endpoint: "http://localhost:7300/repositories/NuScenes/statements"
