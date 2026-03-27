@@ -9,7 +9,7 @@ import vcd.types as types
 from vcd.core import VCD, ElementType, SetMode
 
 ##############################################################################
-#                           CLIENTE SPARQL
+#                           SPARQL CLIENT
 ##############################################################################
 class SparqlClient:
     def __init__(self, endpoint_url: str):
@@ -17,7 +17,7 @@ class SparqlClient:
 
     def query(self, sparql_query: str) -> dict | None:
         """
-        Ejecuta la consulta SPARQL (GET) y devuelve resultados en JSON.
+        Execute the SPARQL query (GET) and return results in JSON.
         """
         params = {"query": sparql_query}
         headers = {"Accept": "application/sparql-results+json"}
@@ -36,7 +36,7 @@ class SparqlClient:
 
 
 ##############################################################################
-# PROCESADORES DE ACCIONES Y EVENTOS
+# ACTION AND EVENT PROCESSORS
 ##############################################################################
 class ActionsProcessor:
     def __init__(self, sparql_results: dict):
@@ -114,7 +114,7 @@ class EventsProcessor:
 
 
 ##############################################################################
-#  PROCESADOR DE RELACIONES
+#  RELATIONSHIP PROCESSOR
 ##############################################################################
 class RelationshipsProcessor:
     def __init__(self, sparql_results: dict):
@@ -131,7 +131,7 @@ class RelationshipsProcessor:
                 continue
 
             rel_type_uri = b["relType"]["value"]
-            # Omitimos hasAction / hasEvent porq ya lo estamos insertando en la misma escena
+            # Skip hasAction / hasEvent because we're already inserting them in the same scene
             if rel_type_uri.endswith("hasAction") or rel_type_uri.endswith("hasEvent"):
                 continue
 
@@ -140,7 +140,7 @@ class RelationshipsProcessor:
 
             sub_id = subject_uri.split("#")[-1]
             obj_id = object_uri.split("#")[-1]
-            if sub_id.startswith("scene-") or obj_id.startswith("scene-"): #omitimos las relaciones donde el sujeto y objeto sean escenas por lo mismo, estamos en la misma escena
+            if sub_id.startswith("scene-") or obj_id.startswith("scene-"): # skip relations where subject or object are scenes for the same reason; we're in the same scene
                 continue
 
             rel_type = rel_type_uri.split("#")[-1]
@@ -168,21 +168,21 @@ class RelationshipsProcessor:
 
 
 ##############################################################################
-#  PROCESADOR DE HYPOTENUSE (NUEVO FORMATO)
+#  HYPOTENUSE PROCESSOR (NEW FORMAT)
 ##############################################################################
 class HypotenuseProcessor:
     """
-    Interpreta la query que devuelve: ?vehiculo ?frame ?hypotenuse
-    Ejemplo de fila:
+    Interprets the query that returns: ?vehiculo ?frame ?hypotenuse
+    Example row:
       adas:ego_vehicle, adas:scene-0048_ego_frame_25, 2.6655808606663594
-    Y lo agrupa en: scene_name -> [ { object_name, framestamp, hypotenuse }, ...]
+    And groups it into: scene_name -> [ { object_name, framestamp, hypotenuse }, ...]
     """
     def __init__(self, sparql_results: dict):
         self.sparql_results = sparql_results
 
     def get_data_by_scene(self) -> dict:
         """
-        Estructura final:
+        Final structure:
         {
           "scene-0048": [
             {"object_name":"ego_vehicle", "framestamp":25, "hypotenuse":2.66},
@@ -196,8 +196,8 @@ class HypotenuseProcessor:
             return data_by_scene
 
         for b in self.sparql_results["results"]["bindings"]:
-            veh_uri   = b["vehiculo"]["value"]      # p.e. "adas:ego_vehicle"
-            frame_uri = b["frame"]["value"]         # p.e. "adas:scene-0048_ego_frame_25"
+            veh_uri   = b["vehiculo"]["value"]      # e.g. "adas:ego_vehicle"
+            frame_uri = b["frame"]["value"]         # e.g. "adas:scene-0048_ego_frame_25"
             hyp_str   = b["hypotenuse"]["value"]
 
             # 1) object_name = "ego_vehicle"
@@ -230,7 +230,7 @@ class HypotenuseProcessor:
 
 
 ##############################################################################
-#  INSERTOR UNIFICADO
+#  UNIFIED INSERTER
 ##############################################################################
 import os
 from vcd.core import VCD, ElementType, SetMode
@@ -238,7 +238,7 @@ import vcd.types as types
 
 class VcdEventsActionsInserter:
     """
-    Inserta acciones, eventos, relaciones y datos adicionales en el VCD
+    Inserts actions, events, relations, and additional data into the VCD
     """
     def __init__(self,
                  data_by_action: dict,
@@ -305,7 +305,7 @@ class VcdEventsActionsInserter:
         return (vcd_obj.get_metadata() or {}).get('scene_name', '')
 
     def _find_action_uid(self, vcd_obj: VCD, name: str) -> str | None:
-        # get_actions() devuelve lista de UID strings
+        # get_actions() returns a list of UID strings
         for uid in vcd_obj.get_actions() or []:
             action = vcd_obj.get_action(uid)
             if action and action.get('name') == name:
@@ -313,7 +313,7 @@ class VcdEventsActionsInserter:
         return None
     
     def _find_event_uid(self, vcd_obj: VCD, name: str) -> str | None:
-        # get_events() devuelve lista de UID strings
+        # get_events() returns a list of UID strings
         for uid in vcd_obj.get_events() or []:
             event = vcd_obj.get_event(uid)
             if event and event.get('name') == name:
@@ -372,16 +372,16 @@ class VcdEventsActionsInserter:
 
 
     ###########################################################################
-    #  HYPOTENUSE: LÍNEA A LÍNEA DE LA QUERY
+    #  HYPOTENUSE: LINE-BY-LINE FROM THE QUERY
     ###########################################################################
 
     def _insert_hypotenuse_for_scene(self, vcd_obj: VCD, scene_name: str) -> int:
         """
-        Recorre self.data_by_hypotenuse[scene_name], y para cada fila:
-        - object_name (vehiculo),
+        Iterate over self.data_by_hypotenuse[scene_name], and for each row:
+        - object_name (vehicle),
         - framestamp,
         - hypotenuse
-        => añade un Num(name="hypotenuse", val=...) en object_data, frame=framestamp
+        => add a Num(name="hypotenuse", val=...) to object_data, frame=framestamp
         """
         if scene_name not in self.data_by_hypotenuse:
             return 0
@@ -390,16 +390,16 @@ class VcdEventsActionsInserter:
         items = self.data_by_hypotenuse[scene_name]
 
         for item in items:
-            obj_name  = item["object_name"]     # p.e. "ego_vehicle"
-            frame_val = item["framestamp"]      # p.e. 25
-            hyp_val   = item["hypotenuse"]      # p.e. 2.6655...
+            obj_name  = item["object_name"]     # e.g. "ego_vehicle"
+            frame_val = item["framestamp"]      # e.g. 25
+            hyp_val   = item["hypotenuse"]      # e.g. 2.6655...
 
             obj_uid = vcd_obj.get_object_uid_by_name(obj_name)
             if obj_uid is None:
-                # no existe => omite
+                # not found => skip
                 continue
 
-            # Añadir un Num(name="hypotenuse", val=...) en este frame
+            # Add a Num(name="hypotenuse", val=...) on this frame
             vcd_obj.add_object_data(
                 uid=obj_uid,
                 object_data=types.num("hypotenuse", hyp_val),
@@ -436,7 +436,7 @@ class VcdEventsActionsInserter:
             st, en = info['start_framestamp'], info['end_framestamp']
             sem_type = info['semantic_type']
 
-            # Insertar la acción y dejar que VCD asigne el UID numérico
+            # Insert the action and let VCD assign the numeric UID
             vcd_obj.add_action(
                 name=action_id,
                 semantic_type=sem_type,
@@ -447,7 +447,7 @@ class VcdEventsActionsInserter:
             inserted += 1
 
             parts = action_id.split('-')
-            # Todos los formatos comparten: [<Tipo>, "scene", <SceneID>, ... , "frames_..."]
+            # All formats share: [<Type>, "scene", <SceneID>, ... , "frames_..."]
 
             # 1) BrakingHard  → ['BrakingHard','scene','0049','0','frames_27_29']
             if sem_type == 'BrakingHard':
@@ -673,7 +673,7 @@ class VcdEventsActionsInserter:
             frm = info['framestamp']
             sem_type = info['semantic_type']
 
-            # Insertar el evento y dejar que VCD asigne el UID numérico
+            # Insert the event and let VCD assign the numeric UID
             vcd_obj.add_event(
                 name=event_id,
                 semantic_type=sem_type,
@@ -684,7 +684,7 @@ class VcdEventsActionsInserter:
             inserted += 1
 
             parts = event_id.split('-')
-            # Todos los formatos comparten: [<Tipo>, "scene", <SceneID>, ... , "frame_..."]
+            # All formats share: [<Type>, "scene", <SceneID>, ... , "frame_..."]
 
             # 1) HardBrake → ['HardBrake','scene','0049','0','frame_27']
             if sem_type == 'HardBrake':
@@ -804,13 +804,13 @@ class VcdEventsActionsInserter:
         return inserted
 
 
-    #esta función la uso para al insertar las relaciones que coja los frame intervals desde los eventos y acciones que ha registrado (desde graphdb no lo conseguía)
+    # I use this function so that when inserting relations it takes frame intervals from recorded events/actions (I couldn't get it from GraphDB)
     def _get_relation_frames(self, vcd_obj: VCD, sub_uid: str, sub_type_uri: str,
                              obj_uid: str, obj_type_uri: str):
         """
-        Si subject es action/event => lee frame_intervals
-        sino, si object es action/event => lee las suyas
-        sino => (0,0).
+        If subject is action/event => read its frame_intervals
+        else, if object is action/event => read its frame_intervals
+        else => (0,0).
         """
         # subject
         if sub_type_uri.lower().endswith("action"):
@@ -885,7 +885,7 @@ if __name__ == "__main__":
 
     client = SparqlClient(endpoint_url)
 
-    # 1) Query ACCIONES
+    # 1) Query ACTIONS
     sparql_query_actions = """
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX adas: <http://www.semanticweb.org/vicomtech/ontologies/nuscenes#>
@@ -902,7 +902,7 @@ if __name__ == "__main__":
     ORDER BY ?scene ?action
     """
 
-    # 2) Query EVENTOS
+    # 2) Query EVENTS
     sparql_query_events = """
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX adas: <http://www.semanticweb.org/vicomtech/ontologies/nuscenes#>
@@ -918,7 +918,7 @@ if __name__ == "__main__":
     ORDER BY ?scene ?event
     """
 
-    # 3) Query RELACIONES
+    # 3) Query RELATIONS
     sparql_query_relations = """
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX adas: <http://www.semanticweb.org/vicomtech/ontologies/nuscenes#>
@@ -977,7 +977,7 @@ if __name__ == "__main__":
     #ORDER BY ?scene ?subject ?relType ?object
     
 
-    # 4) Query HYPOTENUSE en su nuevo formato:
+    # 4) Query HYPOTENUSE in its new format:
     sparql_query_hypotenuse = """
     PREFIX adas: <http://www.semanticweb.org/vicomtech/ontologies/nuscenes#>
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -990,38 +990,38 @@ if __name__ == "__main__":
     ORDER BY ?vehiculo ?frame
     """
 
-    # ---- Ejecutamos las consultas
+    # ---- Execute the queries
     actions_data = {}
     events_data  = {}
     relations_data = {}
     hyp_data_by_scene = {}
 
-    # (A) Acciones
+    # (A) Actions
     res_actions = client.query(sparql_query_actions)
     if res_actions:
         a_proc = ActionsProcessor(res_actions)
         actions_data = a_proc.get_data_by_action()
 
-    # (B) Eventos
+    # (B) Events
     res_events = client.query(sparql_query_events)
     if res_events:
         e_proc = EventsProcessor(res_events)
         events_data = e_proc.get_data_by_event()
 
-    # (C) Relaciones
+    # (C) Relations
     res_rel = client.query(sparql_query_relations)
     if res_rel:
         r_proc = RelationshipsProcessor(res_rel)
         relations_data = r_proc.get_data_by_relation()
 
-    # (D) Hypotenuse: NUEVA forma
+    # (D) Hypotenuse: NEW format
     res_hyp = client.query(sparql_query_hypotenuse)
     if res_hyp:
         hp_proc = HypotenuseProcessor(res_hyp)
         hyp_data_by_scene = hp_proc.get_data_by_scene() 
         # => scene-XXXX -> [ {object_name, framestamp, hypotenuse}, ...]
 
-    # Insertamos todo en el VCD
+    # Insert everything into the VCD
     inserter = VcdEventsActionsInserter(
         data_by_action=actions_data,
         data_by_event=events_data,

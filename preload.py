@@ -413,7 +413,7 @@ def process_vcd(v):
         frame_objects = myVCD.get_frame(frame_id).get('objects', {})
         for obj_uid, obj_data in frame_objects.items():
             if obj_uid != ego_vehicle:
-                # Non-ego objects: attach attributes to their per-frame nodese
+                # Non-ego objects: attach attributes to their per-frame nodes
                 if 'object_data' in obj_data and obj_data['object_data']:
                     frame_instance = f"{object_dic[obj_uid]}_frame_{frame_id}"
                     if frame_instance in scene_data:
