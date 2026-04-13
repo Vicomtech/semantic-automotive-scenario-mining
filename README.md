@@ -52,7 +52,7 @@ When the console tells you to import `population_V9.nq`:
 3) Select `population_V9.nq` and click **Import**.
 4) Wait for the import to finish.
 
-![Preload import](./assets/images/preload.py.png)
+![Preload import](./assets/images/preload.png)
 
 ### Import `queries_V6.nt`
 When the console tells you to import queries:
@@ -61,7 +61,7 @@ When the console tells you to import queries:
 3) Do **not** select `population_V9.nq` at this step.
 4) Click **Import** and wait for it to finish.
 
-![Queries import](./assets/images/queries.py.png)
+![Queries import](./assets/images/queries.png)
 
 ## Export actions/events back to VCDs
 At the end, the pipeline asks:
