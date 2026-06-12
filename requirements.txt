@@ -8,4 +8,14 @@ SPARQLWrapper>=2.0.0,<3
 SPARQL-Burger>=1.0.2,<2   
 
 # OpenLABEL / VCD
-vcd>=6.0.0,<7        
+numpy==1.22.0
+vcd>=6.0.3,<7
+
+# NuScenes Converter
+matplotlib==3.5.3
+pywinpty==2.0.9
+nuScenes-devkit==1.1.9
+pyquaternion==0.9.9
+shapely==1.8.5
+tqdm==4.64.1
+geopandas==0.10.2

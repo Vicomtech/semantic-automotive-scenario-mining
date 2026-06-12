@@ -1,4 +1,4 @@
-# semantic-automotive-scenario-mining (NuScenes) - PIPELINE
+# semantic-automotive-scenario-mining
 
 This project runs a pipeline that:
 1) starts GraphDB (via Docker),
@@ -19,6 +19,11 @@ Edit `conf.yaml` before running the pipeline if you need to change paths, ports,
 - `endpoint_url`: full GraphDB SPARQL endpoint.
 - `api`: optional class discovery API (used in preload).
 - `thresholds`: numerical thresholds used for event/action detection.
+
+## Data
+The input ASAM OpenLABEL files and the generated output ASAM OpenLABEL files with the identified actions and events can be downloaded from the following form: https://opendatasets.vicomtech.org/di21-automotive-scenario-mining-using-semantic-graph-databases/ff16a56f
+
+The user can also generate the input ASAM OpenLABEL files automatically by downloading the NuScenes dataset locally and  using the `nuscenes_converter.py` class, see `example_converter.py` to see how to use it.
 
 ## Run the pipeline
 From the repository root, run:
