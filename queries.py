@@ -657,20 +657,28 @@ SELECT
   (MIN(?fs1) AS ?start)
   (MAX(?fs2) AS ?end)
 WHERE {{
-  # Scene, its EgoData and the ego_vehicle
+    # Escena, su EgoData y el ego_vehicle
   ?scene a {pref_str}:scene ;
          {pref_str}:hasEgoData  ?ed ;
          {pref_str}:hasObject   ?l1, ?l2, ?v .
+    ?ed    a {pref_str}:EgoData ;
+                 {pref_str}:framestamp   ?fs2 ;
+                 {pref_str}:ego_rotation  ?r2 ;
+                 {pref_str}:isLocatedIn  ?l2 .
+    ?ego   {pref_str}:hasData     ?ed .
 
-  # Lanes
+    # Carriles
   ?l1 a {pref_str}:lane .
   ?l2 a {pref_str}:lane ;
       {pref_str}:isNextTo       ?l1 .
   FILTER(?l1 != ?l2)
 
-  # Cut-in candidate vehicle
+    # Vehiculo candidato al cut-in
   ?v a {pref_str}:vehicle ;
      {pref_str}:hasData       ?od1, ?od2 .
+    ?od1 a {pref_str}:ObjectData ;
+             {pref_str}:framestamp   ?fs1 ;
+             {pref_str}:isLocatedIn  ?l1 .
   ?od2 a {pref_str}:ObjectData ;
        {pref_str}:framestamp      ?fs2 ;
        {pref_str}:isLocatedIn     ?l2 ;
@@ -680,23 +688,13 @@ WHERE {{
 
   FILTER(str(?front) = "true")
   FILTER(?de   < {THRESHOLD_CUT_IN})
+    FILTER(?fs2 > ?fs1)
 
-  ?ed    a {pref_str}:EgoData ;
-        {pref_str}:framestamp   ?fs2 ;
-        {pref_str}:ego_rotation  ?r2 ;
-        {pref_str}:isLocatedIn  ?l2 .
-  ?ego   {pref_str}:hasData     ?ed .
-
-  BIND(?fs2 - 1 AS ?fs1)
-  ?od1 a {pref_str}:ObjectData ;
-      {pref_str}:framestamp   ?fs1 ;
-      {pref_str}:isLocatedIn  ?l1 .
-
-  # rotation: normalized angular difference using cos (avoids ±pi jump)
   BIND(ofn:pi() AS ?pi)
-  BIND((?r1 - ?r2) AS ?drot)
-  BIND(ofn:cos(?drot) AS ?cosd)
-  FILTER(?cosd > ofn:cos(?pi/4))
+    FILTER(
+        ?r1 > (?r2 - (?pi/4)) &&
+        ?r1 < (?r2 + (?pi/4))
+    )
 }}
 GROUP BY ?scene ?v ?ego ?l1 ?l2
 """
@@ -704,7 +702,7 @@ GROUP BY ?scene ?v ?ego ?l1 ?l2
     if not res:
         return
 
-    # Each result already includes the min–max interval
+    # Cada resultado ya trae el intervalo minimo-maximo
     for b in res["results"]["bindings"]:
         scene = b["scene"]["value"]
         v     = b["v"]["value"]
@@ -913,16 +911,16 @@ WHERE {{
   FILTER(str(?front)="true")
   FILTER(?de < {THRESHOLD_CUT_OUT})
 
-  BIND(?fs1 + 1 AS ?fs2)
   ?od2 a {pref_str}:ObjectData ;
        {pref_str}:framestamp    ?fs2 ;
        {pref_str}:isLocatedIn   ?l2 .
+    FILTER(?fs2 > ?fs1)
 
-  # rotation: normalized angular difference using cos (avoids ±pi jump)
   BIND(ofn:pi() AS ?pi)
-  BIND((?r1 - ?r2) AS ?drot)
-  BIND(ofn:cos(?drot) AS ?cosd)
-  FILTER(?cosd > ofn:cos(?pi/4))
+    FILTER(
+        ?r1 > (?r2 - (?pi/4)) &&
+        ?r1 < (?r2 + (?pi/4))
+    )
 }}
 GROUP BY ?scene ?v ?ego ?l1 ?l2
 ORDER BY ?scene ?v ?start
