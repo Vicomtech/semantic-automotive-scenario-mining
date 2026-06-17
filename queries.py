@@ -671,17 +671,6 @@ WHERE {{
   # Cut-in candidate vehicle
   ?v a {pref_str}:vehicle ;
      {pref_str}:hasData       ?od1, ?od2 .
-  ?od1 a {pref_str}:ObjectData ;
-       {pref_str}:framestamp   ?fs1 ;
-       {pref_str}:isLocatedIn  ?l1 .
-  BIND(?fs1 + 1 AS ?fs2)
-
-  ?ed    a {pref_str}:EgoData ;
-         {pref_str}:framestamp   ?fs2 ;
-         {pref_str}:ego_rotation  ?r2 ;
-         {pref_str}:isLocatedIn  ?l2 .
-  ?ego   {pref_str}:hasData     ?ed .
-
   ?od2 a {pref_str}:ObjectData ;
        {pref_str}:framestamp      ?fs2 ;
        {pref_str}:isLocatedIn     ?l2 ;
@@ -691,6 +680,17 @@ WHERE {{
 
   FILTER(str(?front) = "true")
   FILTER(?de   < {THRESHOLD_CUT_IN})
+
+  ?ed    a {pref_str}:EgoData ;
+        {pref_str}:framestamp   ?fs2 ;
+        {pref_str}:ego_rotation  ?r2 ;
+        {pref_str}:isLocatedIn  ?l2 .
+  ?ego   {pref_str}:hasData     ?ed .
+
+  BIND(?fs2 - 1 AS ?fs1)
+  ?od1 a {pref_str}:ObjectData ;
+      {pref_str}:framestamp   ?fs1 ;
+      {pref_str}:isLocatedIn  ?l1 .
 
   # rotation: normalized angular difference using cos (avoids ±pi jump)
   BIND(ofn:pi() AS ?pi)
